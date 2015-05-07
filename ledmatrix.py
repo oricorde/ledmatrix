@@ -193,6 +193,18 @@ def scan():
     GPIO.output(oe_pin, 0)
     scan.row = (scan.row + 1) & 0x0F
 
+def moveLeft(rowstart,rowstop):
+  nbPixels = 1
+  for line in range(rowstart,rowstop):
+    index = line * (WIDTH / 8 )
+    for column in range (0, WIDTH / 8):
+      if displaybuf[index] > 127: displaybuf[index] -= 128
+      displaybuf[index] = displaybuf[index]<<nbPixels
+      if (column != (WIDTH / 8) - 1 ):
+	incomingchar = displaybuf[index+1] #byte
+        for x in range (0, nbPixels): displaybuf[index] += ((incomingchar & (128>>x)) >> (7-x))<<(nbPixels-x-1)
+      index += 1
+
 def drawDigital(x , y , n):
   #if (n >= 10 or (0 != (x %8))): return
   index = y * (WIDTH / 8) + x / 8
@@ -240,15 +252,55 @@ def drawPoint( x , y , pixel):
 count = 0
 pos = 0
 scan.row = 0
-while True:
-    for i in range (0,500):
+
+def swipeColumn():
+  for i in range (0,8):
+    for j in range (0,120):
       scan()
-    clear();
+    moveLeft(0,16)
+
+#for 16x64
+def swipeLeft():
+  for i in range (0,64):
+    for j in range (0,120):
+      scan()
+    moveLeft(0,16)
+
+#for 16x64
+def displayMessage(line1,line2 = ''):
+  #should test length of messages
+  for char in range(len(line1)):
+    drawCharacter(char * 8, 0 , ord(line1[char]))
+  if line2:
+    for char in range(len(line1)):
+      drawCharacter(char * 8, 8 , ord(line2[char]))
+
+def displayLongMessage(line1,rotate = 0):
+  for char in range(len(line1)):
+    if (char < 8):
+      drawCharacter(char * 8, 4 , ord(line1[char]))
+    else:
+      swipeColumn()
+      drawCharacter(56 , 4, ord(line1[char]))
+  swipe = 0
+  while rotate:
+      swipeColumn()
+      drawCharacter(56 , 4, ord(line1[swipe % len(line1)]))
+      swipe +=1
+      if (swipe == 50): break
+  swipeLeft()    
+
+
+def test1():
     drawRect(count,0,10,12,1)
     drawCharacter(48,0,71)
-    drawDigital(32,0,count+1)
-    drawDigital(40,0,count)
-    drawDigital(pos*8 ,0,10)
-    count = (count + 1 ) & 0x7
-    pos += 1
-    if pos == 5: pos = 0
+    drawCharacter(56,0,55)
+    drawDigital(32,0,2)
+    drawDigital(40,0,4)
+
+while True:
+    swipeLeft()
+    displayLongMessage('Hello everybody! ',True)
+    displayMessage('ABcd1234','efGH5678')
+    swipeLeft()
+    test1()
