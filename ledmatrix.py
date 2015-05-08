@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+import datetime
  
 delay = 0.000001
  
@@ -163,19 +164,16 @@ def bits_from_int(x):
     return (a_bit, b_bit, c_bit, d_bit)
  
 def set_row(row):
-    #time.sleep(delay)
     a_bit, b_bit, c_bit, d_bit = bits_from_int(row)
     GPIO.output(a_pin, a_bit)
     GPIO.output(b_pin, b_bit)
     GPIO.output(c_pin, c_bit)
     GPIO.output(d_pin, d_bit)
-    #time.sleep(delay)
  
 def scan():
     head = scan.row * (WIDTH / 8)
     for line in range(0,HEIGHT / 16):
         index = head
-        head += WIDTH * 2
         for byte in range (0, WIDTH / 8):
           pixels = displaybuf[index]
 	  index += 1
@@ -215,7 +213,6 @@ def drawDigital(x , y , n):
     idxvalue += 1
 
 def drawCharacter(x , y , n):
-  #if (n >= 10 or (0 != (x %8))): return
   if (0 != (x % 8)): return    # x not a multiple of 8
   if ((n>9) and (n<32)): return # invalid character
   if ((n>=0) and (n<=9)): idxvalue=(n+16)
@@ -248,10 +245,6 @@ def drawPoint( x , y , pixel):
    else:
      displaybuf[index] &= ~(0x80 >> bit)
 
- 
-count = 0
-pos = 0
-scan.row = 0
 
 def swipeColumn():
   for i in range (0,8):
@@ -292,15 +285,18 @@ def displayLongMessage(line1,rotate = 0):
 
 
 def test1():
-    drawRect(count,0,10,12,1)
+    drawRect(0,0,10,12,1)
     drawCharacter(48,0,71)
     drawCharacter(56,0,55)
     drawDigital(32,0,2)
     drawDigital(40,0,4)
 
+scan.row = 0
 while True:
     swipeLeft()
-    displayLongMessage('Hello everybody! ',True)
+    displayLongMessage(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
     displayMessage('ABcd1234','efGH5678')
+    swipeLeft()
+    displayLongMessage('Raspberry Pi LED Matrix with Python ',True)
     swipeLeft()
     test1()
