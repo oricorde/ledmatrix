@@ -265,7 +265,7 @@ def displayMessage(line1,line2 = ''):
   for char in range(len(line1)):
     drawCharacter(char * 8, 0 , ord(line1[char]))
   if line2:
-    for char in range(len(line1)):
+    for char in range(len(line2)):
       drawCharacter(char * 8, 8 , ord(line2[char]))
 
 def displayLongMessage(line1,rotate = 0):
