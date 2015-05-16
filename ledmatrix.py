@@ -1,44 +1,19 @@
 import RPi.GPIO as GPIO
 import time
 import datetime
+#from threading import Thread
  
-delay = 0.000001
+class LEDMatrix:
+  delay = 0.000001
  
-GPIO.setmode(GPIO.BCM)
-red1_pin = 17
-clock_pin = 3
-a_pin = 7
-b_pin = 8
-c_pin = 9
-d_pin = 10
-latch_pin = 4
-oe_pin = 2
-WIDTH=64
-HEIGHT=16 
-mask = 0xff
-
-GPIO.setup(red1_pin, GPIO.OUT)
-GPIO.setup(clock_pin, GPIO.OUT)
-GPIO.setup(a_pin, GPIO.OUT)
-GPIO.setup(b_pin, GPIO.OUT)
-GPIO.setup(c_pin, GPIO.OUT)
-GPIO.setup(d_pin, GPIO.OUT)
-GPIO.setup(latch_pin, GPIO.OUT)
-GPIO.setup(oe_pin, GPIO.OUT)
+  GPIO.setmode(GPIO.BCM)
+  GPIO.setwarnings(False)
+  WIDTH=64
+  HEIGHT=16 
+  mask = 0xff
  
-displaybuf = bytearray([
-    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x01, 0xFC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x01, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60,
-    0x01, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x00, 0xE0, 0x07, 0x8F, 0xC7, 0xC7, 0xC7, 0xE0,
-    0x00, 0x40, 0x0C, 0xCE, 0x6C, 0x6C, 0x6C, 0xE0, 0x00, 0xE0, 0x0C, 0x0C, 0x6C, 0x6C, 0x6C, 0x60,
-    0x01, 0xF0, 0x07, 0x8C, 0x6F, 0xEF, 0xEC, 0x60, 0x23, 0xF8, 0x00, 0xCC, 0x6C, 0x0C, 0x0C, 0x60,
-    0x33, 0xF8, 0x0C, 0xCE, 0x6C, 0x6C, 0x6C, 0xE0, 0x3B, 0xF8, 0x07, 0x8F, 0xC7, 0xC7, 0xC7, 0xE0,
-    0x3B, 0xF8, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x1B, 0xF8, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00,
-    0x0B, 0xF8, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x07, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-])
- 
-digitals = bytearray([
-  0x00, 0x1C, 0x36, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00, 0x00, 0x00, 0x00, # 0
+  digitals = bytearray([
+    0x00, 0x1C, 0x36, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00, 0x00, 0x00, 0x00, # 0
     0x00, 0x18, 0x78, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x00, 0x00, 0x00, 0x00, # 1
     0x00, 0x3E, 0x63, 0x63, 0x63, 0x06, 0x06, 0x0C, 0x18, 0x30, 0x63, 0x7F, 0x00, 0x00, 0x00, 0x00, # 2
     0x00, 0x3E, 0x63, 0x63, 0x06, 0x1C, 0x06, 0x03, 0x03, 0x63, 0x66, 0x3C, 0x00, 0x00, 0x00, 0x00, # 3
@@ -50,10 +25,10 @@ digitals = bytearray([
     0x00, 0x1C, 0x36, 0x63, 0x63, 0x63, 0x37, 0x1F, 0x03, 0x03, 0x36, 0x3C, 0x00, 0x00, 0x00, 0x00, # 9
     0x00, 0x00, 0x00, 0x10, 0x38, 0x6C, 0xC6, 0xC6, 0xFE, 0xC6, 0xC6, 0xC6, 0xC6, 0x00, 0x00, 0x00  # A
 
-])
+  ])
 
 # full ASCII character set (8x8) (760 bytes)
-font8x8_basic = bytearray([
+  font8x8_basic = bytearray([
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   # U+0020 (space)
      0x18, 0x3C, 0x3C, 0x18, 0x18, 0x00, 0x18, 0x00,   # U+0021 (!)
      0x36, 0x36, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   # U+0022 (")
@@ -150,153 +125,167 @@ font8x8_basic = bytearray([
      0x07, 0x0C, 0x0C, 0x38, 0x0C, 0x0C, 0x07, 0x00,   # U+007D (})
      0x6E, 0x3B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   # U+007E (~)
      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,   # U+007F (block)
-])
+  ])
 
-def clear():
-    for i in range (0,WIDTH * HEIGHT / 8):
-	displaybuf[i]=0x00
+  def __init__(self, red1_pin = 17, clock_pin = 3, a_pin = 7, b_pin = 8, c_pin = 9, d_pin = 10, latch_pin = 4, oe_pin = 2):
+    self.row = 0
+    self.red1_pin = red1_pin
+    self.clock_pin = clock_pin
+    self.a_pin = a_pin
+    self.b_pin = b_pin
+    self.c_pin = c_pin
+    self.d_pin = d_pin
+    self.latch_pin = latch_pin
+    self.oe_pin = oe_pin
+    GPIO.setup(self.red1_pin, GPIO.OUT)
+    GPIO.setup(self.clock_pin, GPIO.OUT)
+    GPIO.setup(self.a_pin, GPIO.OUT)
+    GPIO.setup(self.b_pin, GPIO.OUT)
+    GPIO.setup(self.c_pin, GPIO.OUT)
+    GPIO.setup(self.d_pin, GPIO.OUT)
+    GPIO.setup(self.latch_pin, GPIO.OUT)
+    GPIO.setup(self.oe_pin, GPIO.OUT)
+
+    self.displaybuf = bytearray([
+      0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x01, 0xFC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x01, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60,
+      0x01, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x00, 0xE0, 0x07, 0x8F, 0xC7, 0xC7, 0xC7, 0xE0,
+      0x00, 0x40, 0x0C, 0xCE, 0x6C, 0x6C, 0x6C, 0xE0, 0x00, 0xE0, 0x0C, 0x0C, 0x6C, 0x6C, 0x6C, 0x60,
+      0x01, 0xF0, 0x07, 0x8C, 0x6F, 0xEF, 0xEC, 0x60, 0x23, 0xF8, 0x00, 0xCC, 0x6C, 0x0C, 0x0C, 0x60,
+      0x33, 0xF8, 0x0C, 0xCE, 0x6C, 0x6C, 0x6C, 0xE0, 0x3B, 0xF8, 0x07, 0x8F, 0xC7, 0xC7, 0xC7, 0xE0,
+      0x3B, 0xF8, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x1B, 0xF8, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00,
+      0x0B, 0xF8, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x07, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ])
+
+  def clear(self):
+    for i in range (0,LEDMatrix.WIDTH * LEDMatrix.HEIGHT / 8):
+	self.displaybuf[i]=0x00
  
-def bits_from_int(x):
+  def bits_from_int(self,x):
     a_bit = x & 0x01
     b_bit = x & 0x02
     c_bit = x & 0x04
     d_bit = x & 0x08
     return (a_bit, b_bit, c_bit, d_bit)
  
-def set_row(row):
-    a_bit, b_bit, c_bit, d_bit = bits_from_int(row)
-    GPIO.output(a_pin, a_bit)
-    GPIO.output(b_pin, b_bit)
-    GPIO.output(c_pin, c_bit)
-    GPIO.output(d_pin, d_bit)
+  def set_row(self,row):
+    a_bit, b_bit, c_bit, d_bit = self.bits_from_int(row)
+    GPIO.output(self.a_pin, a_bit)
+    GPIO.output(self.b_pin, b_bit)
+    GPIO.output(self.c_pin, c_bit)
+    GPIO.output(self.d_pin, d_bit)
  
-def scan():
-    head = scan.row * (WIDTH / 8)
-    for line in range(0,HEIGHT / 16):
+  def scan(self):
+    head = self.row * (LEDMatrix.WIDTH / 8)
+    for line in range(0,LEDMatrix.HEIGHT / 16):
         index = head
-        for byte in range (0, WIDTH / 8):
-          pixels = displaybuf[index]
+        for byte in range (0, LEDMatrix.WIDTH / 8):
+          pixels = self.displaybuf[index]
 	  index += 1
-	  pixels = pixels ^ mask
+	  pixels = pixels ^ LEDMatrix.mask
 	  for bit in range (0,8):
-	    GPIO.output(clock_pin,0)
-            GPIO.output(red1_pin, pixels & (0x80 >> bit))
-            GPIO.output(clock_pin,1)
+	    GPIO.output(self.clock_pin,0)
+            GPIO.output(self.red1_pin, pixels & (0x80 >> bit))
+            GPIO.output(self.clock_pin,1)
 
-    GPIO.output(oe_pin, 1)
-    set_row(scan.row)
-    GPIO.output(latch_pin, 0)
-    GPIO.output(latch_pin, 1)
-    GPIO.output(latch_pin, 0)
-    GPIO.output(oe_pin, 0)
-    scan.row = (scan.row + 1) & 0x0F
+    GPIO.output(self.oe_pin, 1)
+    self.set_row(self.row)
+    GPIO.output(self.latch_pin, 0)
+    GPIO.output(self.latch_pin, 1)
+    GPIO.output(self.latch_pin, 0)
+    GPIO.output(self.oe_pin, 0)
+    self.row = (self.row + 1) & 0x0F
 
-def moveLeft(rowstart,rowstop):
-  nbPixels = 1
-  for line in range(rowstart,rowstop):
-    index = line * (WIDTH / 8 )
-    for column in range (0, WIDTH / 8):
-      if displaybuf[index] > 127: displaybuf[index] -= 128
-      displaybuf[index] = displaybuf[index]<<nbPixels
-      if (column != (WIDTH / 8) - 1 ):
-	incomingchar = displaybuf[index+1] #byte
-        for x in range (0, nbPixels): displaybuf[index] += ((incomingchar & (128>>x)) >> (7-x))<<(nbPixels-x-1)
-      index += 1
+  def moveLeft(self,rowstart,rowstop):
+    nbPixels = 1
+    for line in range(rowstart,rowstop):
+      index = line * (LEDMatrix.WIDTH / 8 )
+      for column in range (0, LEDMatrix.WIDTH / 8):
+        if self.displaybuf[index] > 127: self.displaybuf[index] -= 128
+        self.displaybuf[index] = self.displaybuf[index]<<nbPixels
+        if (column != (LEDMatrix.WIDTH / 8) - 1 ):
+  	  incomingchar = self.displaybuf[index+1] #byte
+          for x in range (0, nbPixels): self.displaybuf[index] += ((incomingchar & (128>>x)) >> (7-x))<<(nbPixels-x-1)
+        index += 1
 
-def drawDigital(x , y , n):
-  #if (n >= 10 or (0 != (x %8))): return
-  index = y * (WIDTH / 8) + x / 8
-  idxvalue = n * 16 
-  for i in range (0,16):
-    displaybuf[index]=digitals[idxvalue]
-    index += WIDTH / 8
-    idxvalue += 1
+  def drawDigital(self,x , y , n):
+    #if (n >= 10 or (0 != (x %8))): return
+    index = y * (WIDTH / 8) + x / 8
+    idxvalue = n * 16 
+    for i in range (0,16):
+      self.displaybuf[index]=LEDMatrix.digitals[idxvalue]
+      index += WIDTH / 8
+      idxvalue += 1
 
-def drawCharacter(x , y , n):
-  if (0 != (x % 8)): return    # x not a multiple of 8
-  if ((n>9) and (n<32)): return # invalid character
-  if ((n>=0) and (n<=9)): idxvalue=(n+16)
-  else: idxvalue=(n-32) #go to the right code for this character
-  idxvalue *= 8 
+  def drawCharacter(self, x , y , n):
+    if (0 != (x % 8)): return    # x not a multiple of 8
+    if ((n>9) and (n<32)): return # invalid character
+    if ((n>=0) and (n<=9)): idxvalue=(n+16)
+    else: idxvalue=(n-32) #go to the right code for this character
+    idxvalue *= 8 
  
-  index = y * (WIDTH / 8) + x / 8
-      
+    index = y * (self.WIDTH / 8) + x / 8
 
-  for i in range (0,8):
-    displaybuf[index]=font8x8_basic[idxvalue]
-    #reverse bit order
-    displaybuf[index] = (displaybuf[index] & 0xF0) >> 4 | (displaybuf[index] & 0x0F) << 4
-    displaybuf[index] = (displaybuf[index] & 0xCC) >> 2 | (displaybuf[index] & 0x33) << 2
-    displaybuf[index] = (displaybuf[index] & 0xAA) >> 1 | (displaybuf[index] & 0x55) << 1
-    index += WIDTH / 8
-    idxvalue += 1
+    for i in range (0,8):
+      self.displaybuf[index]=LEDMatrix.font8x8_basic[idxvalue]
+      #reverse bit order
+      self.displaybuf[index] = (self.displaybuf[index] & 0xF0) >> 4 | (self.displaybuf[index] & 0x0F) << 4
+      self.displaybuf[index] = (self.displaybuf[index] & 0xCC) >> 2 | (self.displaybuf[index] & 0x33) << 2
+      self.displaybuf[index] = (self.displaybuf[index] & 0xAA) >> 1 | (self.displaybuf[index] & 0x55) << 1
+      index += self.WIDTH / 8
+      idxvalue += 1
      
-def drawRect(x1, y1, x2, y2, pixel):
+  def drawRect(self,x1, y1, x2, y2, pixel):
     for x in range(x1, x2):
         for y in range(y1, y2):
-            drawPoint(y,x, pixel)
+            self.drawPoint(y,x, pixel)
  
  
-def drawPoint( x , y , pixel):
-   index = x / 8 + y * WIDTH / 8
-   bit = x % 8 
-   if (pixel):
-     displaybuf[index] |= 0x80 >> bit
-   else:
-     displaybuf[index] &= ~(0x80 >> bit)
-
-
-def swipeColumn():
-  for i in range (0,8):
-    for j in range (0,120):
-      scan()
-    moveLeft(0,16)
-
-#for 16x64
-def swipeLeft():
-  for i in range (0,64):
-    for j in range (0,120):
-      scan()
-    moveLeft(0,16)
-
-#for 16x64
-def displayMessage(line1,line2 = ''):
-  #should test length of messages
-  for char in range(len(line1)):
-    drawCharacter(char * 8, 0 , ord(line1[char]))
-  if line2:
-    for char in range(len(line2)):
-      drawCharacter(char * 8, 8 , ord(line2[char]))
-
-def displayLongMessage(line1,rotate = 0):
-  for char in range(len(line1)):
-    if (char < 8):
-      drawCharacter(char * 8, 4 , ord(line1[char]))
+  def drawPoint(self, x , y , pixel):
+    index = x / 8 + y * WIDTH / 8
+    bit = x % 8 
+    if (pixel):
+      self.displaybuf[index] |= 0x80 >> bit
     else:
-      swipeColumn()
-      drawCharacter(56 , 4, ord(line1[char]))
-  swipe = 0
-  while rotate:
-      swipeColumn()
-      drawCharacter(56 , 4, ord(line1[swipe % len(line1)]))
+      self.displaybuf[index] &= ~(0x80 >> bit)
+
+
+  def swipeColumn(self):
+    for i in range (0,8):
+      for j in range (0,120):
+        self.scan()
+      self.moveLeft(0,16)
+
+#for 16x64
+  def swipeLeft(self):
+    for i in range (0,64):
+      for j in range (0,120):
+        self.scan()
+      self.moveLeft(0,16)
+
+#for 16x64
+  def displayMessage(self,line1,line2 = ''):
+  #should test length of messages
+    lengthLine1 = len(line1)
+    for char in range(lengthLine1):
+      self.drawCharacter(char * 8, 0 , ord(line1[char]))
+    if line2:
+      for char in range(len(line2)):
+        self.drawCharacter(char * 8, 8 , ord(line2[char]))
+
+  def displayLongMessage(self,line1,rotate = 0):
+    lengthLine1 = len(line1)
+    for char in range(lengthLine1):
+      if (char < 8):
+        self.drawCharacter(char * 8, 4 , ord(line1[char]))
+      else:
+        self.swipeColumn()
+        self.drawCharacter(56 , 4, ord(line1[char]))
+    swipe = 0
+    while rotate:
+      self.swipeColumn()
+      self.drawCharacter(56 , 4, ord(line1[swipe % lengthLine1]))
       swipe +=1
       if (swipe == 50): break
-  swipeLeft()    
+    self.swipeLeft()
 
-
-def test1():
-    drawRect(0,0,10,12,1)
-    drawCharacter(48,0,71)
-    drawCharacter(56,0,55)
-    drawDigital(32,0,2)
-    drawDigital(40,0,4)
-
-scan.row = 0
-while True:
-    swipeLeft()
-    displayLongMessage(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
-    displayMessage('ABcd1234','efGH5678')
-    swipeLeft()
-    displayLongMessage('Raspberry Pi LED Matrix with Python ',True)
-    swipeLeft()
-    test1()
