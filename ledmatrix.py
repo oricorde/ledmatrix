@@ -3,7 +3,7 @@ import time
 import datetime
 #from threading import Thread
  
-class LEDMatrix:
+class LEDMatrix(object):
   delay = 0.000001
  
   GPIO.setmode(GPIO.BCM)
@@ -128,6 +128,7 @@ class LEDMatrix:
   ])
 
   def __init__(self, red1_pin = 17, clock_pin = 3, a_pin = 7, b_pin = 8, c_pin = 9, d_pin = 10, latch_pin = 4, oe_pin = 2):
+    super(LEDMatrix, self).__init__()
     self.row = 0
     self.red1_pin = red1_pin
     self.clock_pin = clock_pin
